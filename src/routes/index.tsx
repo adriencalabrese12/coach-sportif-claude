@@ -457,7 +457,7 @@ function Index() {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <a
-              href="#programme"
+              href="/questionnaire"
               className="glow-primary inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform hover:scale-105"
             >
               Générer mon programme
