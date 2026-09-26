@@ -14,7 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkins: {
+        Row: {
+          date: string
+          douleur: string | null
+          envie: string | null
+          fatigue: number | null
+          id: string
+          sommeil: number | null
+          temps: number | null
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          douleur?: string | null
+          envie?: string | null
+          fatigue?: number | null
+          id?: string
+          sommeil?: number | null
+          temps?: number | null
+          user_id?: string
+        }
+        Update: {
+          date?: string
+          douleur?: string | null
+          envie?: string | null
+          fatigue?: number | null
+          id?: string
+          sommeil?: number | null
+          temps?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      measurements: {
+        Row: {
+          date: string
+          poids: number | null
+          tour_taille: number | null
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          poids?: number | null
+          tour_taille?: number | null
+          user_id?: string
+        }
+        Update: {
+          date?: string
+          poids?: number | null
+          tour_taille?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activite: string | null
+          age: number | null
+          blessures: string[]
+          created_at: string
+          duree: number | null
+          equipement: string[]
+          jours: number | null
+          niveau: string | null
+          objectif: string | null
+          pathologies: string[]
+          poids: number | null
+          prenom: string | null
+          sexe: string | null
+          taille: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activite?: string | null
+          age?: number | null
+          blessures?: string[]
+          created_at?: string
+          duree?: number | null
+          equipement?: string[]
+          jours?: number | null
+          niveau?: string | null
+          objectif?: string | null
+          pathologies?: string[]
+          poids?: number | null
+          prenom?: string | null
+          sexe?: string | null
+          taille?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activite?: string | null
+          age?: number | null
+          blessures?: string[]
+          created_at?: string
+          duree?: number | null
+          equipement?: string[]
+          jours?: number | null
+          niveau?: string | null
+          objectif?: string | null
+          pathologies?: string[]
+          poids?: number | null
+          prenom?: string | null
+          sexe?: string | null
+          taille?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          created_at: string
+          id: string
+          seances: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seances?: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seances?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      session_logs: {
+        Row: {
+          date: string
+          id: string
+          kcal: number | null
+          rpe: number | null
+          seance_titre: string
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          id?: string
+          kcal?: number | null
+          rpe?: number | null
+          seance_titre: string
+          user_id?: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          kcal?: number | null
+          rpe?: number | null
+          seance_titre?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
