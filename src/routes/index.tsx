@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import heroImage from "@/assets/hero-coach.jpg";
+import { useSession } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -374,6 +375,7 @@ const BIBLIOTHEQUE = [
 ];
 
 function Index() {
+  const session = useSession();
   const [objectif, setObjectif] = useState<Objectif>("forme");
   const [niveau, setNiveau] = useState<Niveau>("debutant");
   const [jours, setJours] = useState(3);
@@ -419,10 +421,10 @@ function Index() {
             <a href="#exercices" className="transition-colors hover:text-primary">Exercices</a>
           </div>
           <a
-            href="/connexion"
+            href={session ? "/questionnaire" : "/connexion"}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105"
           >
-            Connexion
+            {session ? "Mon espace" : "Connexion"}
           </a>
         </nav>
       </header>
