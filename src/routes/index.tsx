@@ -419,10 +419,10 @@ function Index() {
             <a href="#exercices" className="transition-colors hover:text-primary">Exercices</a>
           </div>
           <a
-            href="#programme"
+            href="/connexion"
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105"
           >
-            Créer mon programme
+            Connexion
           </a>
         </nav>
       </header>

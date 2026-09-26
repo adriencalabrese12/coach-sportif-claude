@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
+import { adapterSeance as adapterSeanceIA } from "@/lib/adapter-seance.functions";
 import {
   adapterSeance,
   analyser,
@@ -58,6 +61,95 @@ function Questionnaire() {
   const [p, setP] = useState<Profil>(INIT);
   const [etape, setEtape] = useState(0);
   const [ci, setCi] = useState<CheckIn>({ fatigue: 2, sommeil: 7, temps: 45 });
+  const [envie, setEnvie] = useState<string | null>(null);
+  const [ia, setIa] = useState<{ seance: unknown; justification: string } | null>(null);
+  const [iaEnCours, setIaEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const session = useSession();
+
+  useEffect(() => {
+    if (session === null) window.location.replace("/connexion");
+  }, [session]);
+
+  // Reprend le profil déjà enregistré.
+  useEffect(() => {
+    if (!session) return;
+    void supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .maybeSingle()
+      .then(({ data: d }) => {
+        if (!d) return;
+        setP((x) => ({
+          ...x,
+          prenom: d.prenom ?? x.prenom,
+          sexe: (d.sexe as Profil["sexe"]) ?? x.sexe,
+          age: d.age ?? x.age,
+          taille: Number(d.taille ?? x.taille),
+          poids: Number(d.poids ?? x.poids),
+          objectif: (d.objectif as Objectif) ?? x.objectif,
+          niveau: (d.niveau as Niveau) ?? x.niveau,
+          jours: d.jours ?? x.jours,
+          duree: d.duree ?? x.duree,
+          equipement: d.equipement as Equipement[],
+          blessures: d.blessures as Zone[],
+          pathologies: d.pathologies,
+          activite: (Number(d.activite) || x.activite) as Profil["activite"],
+        }));
+      });
+  }, [session]);
+
+  async function terminer() {
+    setEtape(4);
+    if (!session) return;
+    setErreur(null);
+    const { error } = await supabase.from("profiles").upsert({
+      user_id: session.user.id,
+      prenom: p.prenom,
+      sexe: p.sexe,
+      age: p.age,
+      taille: p.taille,
+      poids: p.poids,
+      objectif: p.objectif,
+      niveau: p.niveau,
+      jours: p.jours,
+      duree: p.duree,
+      equipement: p.equipement,
+      blessures: p.blessures,
+      pathologies: p.pathologies,
+      activite: String(p.activite),
+      updated_at: new Date().toISOString(),
+    });
+    if (error) return setErreur("Profil non enregistré : " + error.message);
+    const { error: e2 } = await supabase
+      .from("programs")
+      .insert({ user_id: session.user.id, seances: JSON.parse(JSON.stringify(genererProgramme(p))) });
+    if (e2) setErreur("Programme non enregistré : " + e2.message);
+  }
+
+  async function demanderIA() {
+    if (!programme[0] || !session) return;
+    setIaEnCours(true);
+    setErreur(null);
+    setIa(null);
+    try {
+      const checkin = { fatigue: ci.fatigue, sommeil: ci.sommeil, temps: ci.temps, douleur: ci.douleur ?? null, envie };
+      const res = await adapterSeanceIA({ data: { seance: programme[0], checkin: checkin as never } });
+      setIa({ seance: res.seance, justification: res.justification });
+      await supabase.from("checkins").insert({
+        user_id: session.user.id,
+        fatigue: ci.fatigue,
+        sommeil: ci.sommeil,
+        temps: ci.temps,
+        douleur: ci.douleur ?? null,
+        envie,
+      });
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur IA");
+    }
+    setIaEnCours(false);
+  }
   const set = <K extends keyof Profil>(k: K, v: Profil[K]) => setP((x) => ({ ...x, [k]: v }));
   const num = (k: "age" | "taille" | "poids" | "jours" | "duree") => (e: React.ChangeEvent<HTMLInputElement>) =>
     set(k, Number(e.target.value));
@@ -71,6 +163,8 @@ function Questionnaire() {
   );
 
   const titres = ["Profil", "Objectif", "Matériel & santé", "Disponibilité"];
+
+  if (!session) return <main className="p-12 text-center text-muted-foreground">Chargement…</main>;
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-12 sm:px-6">
@@ -144,7 +238,7 @@ function Questionnaire() {
             <button className={chip(false)} disabled={etape === 0} onClick={() => setEtape(etape - 1)}>Retour</button>
             <button
               className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground"
-              onClick={() => setEtape(etape + 1)}
+              onClick={() => (etape === 3 ? void terminer() : setEtape(etape + 1))}
             >
               {etape === 3 ? "Voir mon plan" : "Suivant"}
             </button>
@@ -213,7 +307,32 @@ function Questionnaire() {
                 </button>
               ))}
             </div>
-            {adapte && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["full body", "haut", "jambes", "cardio"].map((v) => (
+                <button key={v} className={chip(envie === v)} onClick={() => setEnvie(envie === v ? null : v)}>
+                  Envie : {v}
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={iaEnCours}
+              onClick={() => void demanderIA()}
+              className="mt-4 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {iaEnCours ? "L'IA adapte ta séance…" : "Adapter ma séance avec l'IA"}
+            </button>
+            {erreur && <p className="mt-3 text-sm text-destructive">{erreur}</p>}
+            {ia && (
+              <div className="mt-4 rounded-xl border border-primary/40 p-4 text-sm">
+                <p className="font-semibold text-primary">{ia.justification}</p>
+                <ul className="mt-2 space-y-1">
+                  {((ia.seance as { exercices?: { nom: string; series?: number; reps?: string }[] })?.exercices ?? []).map((e, i) => (
+                    <li key={i}>{e.nom} — {e.series && e.series > 1 ? `${e.series} × ${e.reps ?? ""}` : (e.reps ?? "")}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {adapte && !ia && (
               <div className="mt-4 text-sm">
                 <p className="text-muted-foreground">{adapte.notes.join(" ") || "Séance inchangée."}</p>
                 <ul className="mt-2 space-y-1">
