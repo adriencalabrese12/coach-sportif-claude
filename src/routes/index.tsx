@@ -390,7 +390,7 @@ function Index() {
         exercices: seance.exercices.map((ex) => ({
           ...ex,
           series: ex.series.includes("x") && !ex.series.includes("min") && !ex.series.includes("s")
-            ? reps(niveau, ex.series.split("x")[1].trim())
+            ? reps(niveau, ex.series.split("x")[1]!.trim())
             : ex.series,
           repos: ex.repos === "—" ? ex.repos : ex.repos.includes("entre séries") ? ex.repos : repos,
         })),
