@@ -7,6 +7,7 @@ import {
   adapterSeance,
   analyser,
   genererProgramme,
+  NOTE_MORPHO,
   type CheckIn,
   type Equipement,
   type Objectif,
@@ -300,6 +301,7 @@ function Questionnaire() {
 
           <section className="space-y-4">
             <h2 className="font-display text-3xl">Programme</h2>
+            <p className="text-sm text-muted-foreground">{NOTE_MORPHO[p.morphologie]}</p>
             {programme.map((s, i) => (
               <article key={i} className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-baseline justify-between">

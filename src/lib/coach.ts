@@ -117,17 +117,33 @@ export function analyser(p: Profil): Analyse {
   };
 }
 
+export const NOTE_MORPHO: Record<Morphologie, string> = {
+  ectomorphe: "Ectomorphe : volume réduit, charges lourdes sur mouvements composés, repos longs, cardio limité pour économiser les calories.",
+  mesomorphe: "Mésomorphe : volume et intensité standards, bonne récupération, progression rapide.",
+  endomorphe: "Endomorphe : répétitions plus hautes, repos courts, séances en circuit et finisseur cardio pour augmenter la dépense.",
+};
+
 function scheme(p: Profil): { series: number; reps: string; repos: number } {
-  // Ectomorphe : moins de volume et plus de repos pour préserver l'énergie.
-  const s = (p.niveau === "debutant" ? 3 : 4) - (p.morphologie === "ectomorphe" && p.niveau !== "debutant" ? 1 : 0);
+  const base = p.niveau === "debutant" ? 3 : 4;
+  const s = base - (p.morphologie === "ectomorphe" && p.niveau !== "debutant" ? 1 : 0);
+  let r: { series: number; reps: string; repos: number };
   switch (p.objectif) {
-    case "perte": return { series: s, reps: "12-15", repos: 40 };
-    case "muscle": return { series: s, reps: "8-12", repos: 90 };
-    case "performance": return { series: s + 1, reps: "4-6", repos: 150 };
-    case "explosivite": return { series: s, reps: "5 explosives", repos: 120 };
-    case "reprise": return { series: 2, reps: "10-12", repos: 75 };
-    default: return { series: 3, reps: "10-12", repos: 60 };
+    case "perte": r = { series: s, reps: "12-15", repos: 40 }; break;
+    case "muscle": r = { series: s, reps: "8-12", repos: 90 }; break;
+    case "performance": r = { series: s + 1, reps: "4-6", repos: 150 }; break;
+    case "explosivite": r = { series: s, reps: "5 explosives", repos: 120 }; break;
+    case "reprise": r = { series: 2, reps: "10-12", repos: 75 }; break;
+    default: r = { series: 3, reps: "10-12", repos: 60 };
   }
+  const force = p.objectif === "muscle" || p.objectif === "maintien";
+  if (p.morphologie === "ectomorphe") {
+    // Charges lourdes, peu de reps, repos longs.
+    r = { ...r, repos: r.repos + 30, reps: force ? "6-10" : r.reps };
+  } else if (p.morphologie === "endomorphe") {
+    // Reps plus hautes, repos courts.
+    r = { ...r, repos: Math.max(30, r.repos - 20), reps: force ? "12-15" : r.reps };
+  }
+  return r;
 }
 
 /** Exercices utilisables : équipement, niveau, blessures. */
@@ -173,7 +189,13 @@ export function genererProgramme(p: Profil): SeanceProg[] {
       }
     });
     // Endomorphe : un finisseur cardio est ajouté quel que soit l'objectif (sauf reprise).
-    if (["perte", "performance", "explosivite"].includes(p.objectif) || (p.morphologie === "endomorphe" && p.objectif !== "reprise")) {
+    const cardio =
+      p.morphologie === "endomorphe"
+        ? p.objectif !== "reprise"
+        : p.morphologie === "ectomorphe"
+          ? p.objectif === "perte"
+          : ["perte", "performance", "explosivite"].includes(p.objectif);
+    if (cardio) {
       const c = dispos.find((e) => e.groupe === "cardio" && (p.objectif !== "perte" || e.met >= 7)) ?? dispos.find((e) => e.groupe === "cardio");
       if (c && !choisis.includes(c)) choisis.push(c);
     }
