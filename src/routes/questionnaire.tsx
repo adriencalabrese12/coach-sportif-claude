@@ -42,7 +42,14 @@ const ACTIVITE: [Profil["activite"], string][] = [
   [1.2, "Sédentaire"], [1.375, "Légèrement actif"], [1.55, "Modérément actif"], [1.725, "Très actif"],
 ];
 
+const MORPHO: [Profil["morphologie"], string, string][] = [
+  ["ectomorphe", "Ectomorphe", "Mince, prend peu de poids, épaules et hanches étroites"],
+  ["mesomorphe", "Mésomorphe", "Athlétique, prend du muscle facilement"],
+  ["endomorphe", "Endomorphe", "Corpulence forte, prend du poids facilement"],
+];
+
 const INIT: Profil = {
+  morphologie: "mesomorphe",
   prenom: "", sexe: "H", age: 30, taille: 175, poids: 75, objectif: "maintien", niveau: "debutant",
   jours: 3, duree: 45, equipement: [], blessures: [], pathologies: [], activite: 1.375,
 };
@@ -72,6 +79,17 @@ function Questionnaire() {
   }, [session]);
 
   // Reprend le profil déjà enregistré.
+  // La morphologie n'a pas encore de colonne en base : mémorisée localement.
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem("morphologie") as Profil["morphologie"] | null;
+      if (m) setP((x) => ({ ...x, morphologie: m }));
+    } catch { /* stockage indisponible */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("morphologie", p.morphologie); } catch { /* ignore */ }
+  }, [p.morphologie]);
+
   useEffect(() => {
     if (!session) return;
     void supabase
@@ -192,6 +210,16 @@ function Questionnaire() {
                   <label>Taille (cm)<input type="number" className={field} value={p.taille} onChange={num("taille")} /></label>
                   <label>Poids (kg)<input type="number" className={field} value={p.poids} onChange={num("poids")} /></label>
                 </div>
+                <p className="text-sm text-muted-foreground">Ta morphologie</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {MORPHO.map(([v, l, d]) => (
+                    <button key={v} className={`${chip(p.morphologie === v)} text-left`} onClick={() => set("morphologie", v)}>
+                      <span className="block">{l}</span>
+                      <span className="block text-xs font-normal opacity-80">{d}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">Activité au quotidien</p>
                 <div className="flex flex-wrap gap-2">
                   {ACTIVITE.map(([v, l]) => (
                     <button key={v} className={chip(p.activite === v)} onClick={() => set("activite", v)}>{l}</button>

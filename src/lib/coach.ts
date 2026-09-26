@@ -4,7 +4,10 @@ export type Niveau = "debutant" | "intermediaire" | "avance";
 export type Equipement = "aucun" | "halteres" | "elastiques" | "barre" | "salle" | "cardio";
 export type Zone = "epaule" | "genou" | "dos" | "poignet" | "cheville";
 
+export type Morphologie = "ectomorphe" | "mesomorphe" | "endomorphe";
+
 export interface Profil {
+  morphologie: Morphologie;
   prenom: string;
   sexe: Sexe;
   age: number;
@@ -93,7 +96,9 @@ export function analyser(p: Profil): Analyse {
     perte: 0.82, muscle: 1.1, performance: 1, reprise: 0.95, explosivite: 1.05, maintien: 1,
   };
   const plancher = p.sexe === "H" ? 1500 : 1200;
-  const kcal = Math.round(Math.max(plancher, tdee * facteur[p.objectif]));
+  // Ectomorphe : métabolisme rapide (+5 %) ; endomorphe : stockage facile (-5 %).
+  const ajustMorpho: Record<Morphologie, number> = { ectomorphe: 1.05, mesomorphe: 1, endomorphe: 0.95 };
+  const kcal = Math.round(Math.max(plancher, tdee * facteur[p.objectif] * ajustMorpho[p.morphologie]));
   const proteines = Math.round(p.poids * (p.objectif === "muscle" || p.objectif === "perte" ? 2 : 1.6));
   const lipides = Math.round(p.poids * 0.9);
   const glucides = Math.max(0, Math.round((kcal - proteines * 4 - lipides * 9) / 4));
@@ -113,7 +118,8 @@ export function analyser(p: Profil): Analyse {
 }
 
 function scheme(p: Profil): { series: number; reps: string; repos: number } {
-  const s = p.niveau === "debutant" ? 3 : 4;
+  // Ectomorphe : moins de volume et plus de repos pour préserver l'énergie.
+  const s = (p.niveau === "debutant" ? 3 : 4) - (p.morphologie === "ectomorphe" && p.niveau !== "debutant" ? 1 : 0);
   switch (p.objectif) {
     case "perte": return { series: s, reps: "12-15", repos: 40 };
     case "muscle": return { series: s, reps: "8-12", repos: 90 };
@@ -166,7 +172,8 @@ export function genererProgramme(p: Profil): SeanceProg[] {
         if (!choisis.includes(e)) choisis.push(e);
       }
     });
-    if (["perte", "performance", "explosivite"].includes(p.objectif)) {
+    // Endomorphe : un finisseur cardio est ajouté quel que soit l'objectif (sauf reprise).
+    if (["perte", "performance", "explosivite"].includes(p.objectif) || (p.morphologie === "endomorphe" && p.objectif !== "reprise")) {
       const c = dispos.find((e) => e.groupe === "cardio" && (p.objectif !== "perte" || e.met >= 7)) ?? dispos.find((e) => e.groupe === "cardio");
       if (c && !choisis.includes(c)) choisis.push(c);
     }
