@@ -383,7 +383,7 @@ function Index() {
     const seances = SEANCES[objectif];
     const repos = REPOS[niveau];
     return Array.from({ length: jours }, (_, i) => {
-      const seance = seances[i % seances.length];
+      const seance = seances[i % seances.length]!;
       return {
         jour: JOURS[i],
         ...seance,
