@@ -7,6 +7,8 @@ export type Zone = "epaule" | "genou" | "dos" | "poignet" | "cheville";
 export type Morphologie = "ectomorphe" | "mesomorphe" | "endomorphe";
 
 export interface Profil {
+  regime: Regime;
+  allergies: Allergie[];
   morphologie: Morphologie;
   prenom: string;
   sexe: Sexe;
@@ -249,4 +251,101 @@ export function adapterSeance(s: SeanceProg, c: CheckIn, p: Profil): { seance: S
     seance: { ...s, duree: Math.min(s.duree, c.temps), exercices: exos, kcal: exos.reduce((a, e) => a + e.kcal, 0) },
     notes,
   };
+}
+
+// ---------- Nutrition ----------
+export type Regime = "omnivore" | "vegetarien" | "vegan";
+export type Allergie = "gluten" | "lactose" | "oeufs" | "arachides" | "poisson";
+
+interface Recette {
+  nom: string;
+  repas: "petit-dej" | "dejeuner" | "collation" | "diner";
+  kcal: number;
+  p: number;
+  g: number;
+  l: number;
+  ingredients: string[];
+  regime: Regime; // le plus restrictif compatible : vegan ⊂ vegetarien ⊂ omnivore
+  allergenes: Allergie[];
+}
+
+const RECETTES: Recette[] = [
+  { nom: "Flocons d'avoine, banane et beurre d'amande", repas: "petit-dej", kcal: 450, p: 15, g: 62, l: 14, ingredients: ["Flocons d'avoine", "Banane", "Purée d'amande", "Boisson végétale"], regime: "vegan", allergenes: ["gluten"] },
+  { nom: "Omelette 3 œufs, pain complet et fruit", repas: "petit-dej", kcal: 480, p: 28, g: 40, l: 22, ingredients: ["Œufs", "Pain complet", "Fruit de saison"], regime: "vegetarien", allergenes: ["gluten", "oeufs"] },
+  { nom: "Skyr, fruits rouges et granola", repas: "petit-dej", kcal: 400, p: 30, g: 48, l: 9, ingredients: ["Skyr", "Fruits rouges", "Granola"], regime: "vegetarien", allergenes: ["lactose", "gluten"] },
+  { nom: "Porridge protéiné soja et fruits", repas: "petit-dej", kcal: 430, p: 25, g: 55, l: 12, ingredients: ["Flocons d'avoine", "Lait de soja", "Protéine végétale", "Fruits"], regime: "vegan", allergenes: ["gluten"] },
+  { nom: "Tofu brouillé, avocat et patate douce", repas: "petit-dej", kcal: 460, p: 26, g: 42, l: 22, ingredients: ["Tofu", "Avocat", "Patate douce", "Curcuma"], regime: "vegan", allergenes: [] },
+  { nom: "Smoothie bowl banane, protéine de pois et graines", repas: "petit-dej", kcal: 420, p: 28, g: 50, l: 12, ingredients: ["Banane", "Protéine de pois", "Graines de chia", "Boisson végétale"], regime: "vegan", allergenes: [] },
+  { nom: "Poulet, riz basmati et brocoli", repas: "dejeuner", kcal: 650, p: 50, g: 70, l: 15, ingredients: ["Blanc de poulet", "Riz basmati", "Brocoli", "Huile d'olive"], regime: "omnivore", allergenes: [] },
+  { nom: "Bowl thon, quinoa et avocat", repas: "dejeuner", kcal: 620, p: 42, g: 55, l: 22, ingredients: ["Thon", "Quinoa", "Avocat", "Tomates"], regime: "omnivore", allergenes: ["poisson"] },
+  { nom: "Curry de pois chiches, riz et épinards", repas: "dejeuner", kcal: 600, p: 24, g: 88, l: 16, ingredients: ["Pois chiches", "Riz", "Épinards", "Lait de coco", "Curry"], regime: "vegan", allergenes: [] },
+  { nom: "Pâtes complètes, tofu sauté et légumes", repas: "dejeuner", kcal: 620, p: 35, g: 78, l: 17, ingredients: ["Pâtes complètes", "Tofu", "Poivrons", "Courgettes"], regime: "vegan", allergenes: ["gluten"] },
+  { nom: "Salade de lentilles, feta et légumes", repas: "dejeuner", kcal: 580, p: 30, g: 65, l: 20, ingredients: ["Lentilles", "Feta", "Concombre", "Tomates"], regime: "vegetarien", allergenes: ["lactose"] },
+  { nom: "Fromage blanc et amandes", repas: "collation", kcal: 220, p: 22, g: 12, l: 9, ingredients: ["Fromage blanc", "Amandes"], regime: "vegetarien", allergenes: ["lactose"] },
+  { nom: "Banane et poignée de noix", repas: "collation", kcal: 240, p: 5, g: 30, l: 12, ingredients: ["Banane", "Noix"], regime: "vegan", allergenes: [] },
+  { nom: "Houmous et bâtonnets de légumes", repas: "collation", kcal: 200, p: 8, g: 20, l: 10, ingredients: ["Houmous", "Carottes", "Concombre"], regime: "vegan", allergenes: [] },
+  { nom: "Saumon, patate douce et haricots verts", repas: "diner", kcal: 620, p: 40, g: 55, l: 24, ingredients: ["Saumon", "Patate douce", "Haricots verts"], regime: "omnivore", allergenes: ["poisson"] },
+  { nom: "Dinde, quinoa et légumes rôtis", repas: "diner", kcal: 560, p: 46, g: 52, l: 14, ingredients: ["Escalope de dinde", "Quinoa", "Légumes rôtis"], regime: "omnivore", allergenes: [] },
+  { nom: "Chili sin carne et riz", repas: "diner", kcal: 580, p: 26, g: 90, l: 12, ingredients: ["Haricots rouges", "Tomates", "Maïs", "Riz"], regime: "vegan", allergenes: [] },
+  { nom: "Gratin d'œufs, épinards et pommes de terre", repas: "diner", kcal: 540, p: 28, g: 50, l: 24, ingredients: ["Œufs", "Épinards", "Pommes de terre", "Fromage"], regime: "vegetarien", allergenes: ["oeufs", "lactose"] },
+];
+
+const RANG: Record<Regime, number> = { vegan: 0, vegetarien: 1, omnivore: 2 };
+const PART: Record<Recette["repas"], number> = { "petit-dej": 0.25, dejeuner: 0.35, collation: 0.1, diner: 0.3 };
+export const LABEL_REPAS: Record<Recette["repas"], string> = {
+  "petit-dej": "Petit-déjeuner", dejeuner: "Déjeuner", collation: "Collation", diner: "Dîner",
+};
+
+export interface RepasPlan {
+  repas: Recette["repas"];
+  nom: string;
+  portion: number;
+  kcal: number;
+  p: number;
+  g: number;
+  l: number;
+}
+export interface JourNutrition {
+  jour: string;
+  repas: RepasPlan[];
+  kcal: number;
+}
+export interface PlanNutrition {
+  jours: JourNutrition[];
+  courses: string[];
+  eau: number;
+  manque: string[];
+}
+
+export function genererNutrition(p: Profil, a: Analyse): PlanNutrition {
+  const manque: string[] = [];
+  const types = Object.keys(PART) as Recette["repas"][];
+  const pools = Object.fromEntries(
+    types.map((t) => {
+      const pool = RECETTES.filter(
+        (r) => r.repas === t && RANG[r.regime] <= RANG[p.regime] && !r.allergenes.some((x) => p.allergies.includes(x)),
+      );
+      if (pool.length === 0) manque.push(LABEL_REPAS[t]);
+      return [t, pool];
+    }),
+  ) as Record<Recette["repas"], Recette[]>;
+
+  const ingredients = new Set<string>();
+  const jours = JOURS.map<JourNutrition>((jour, i) => {
+    const repas: RepasPlan[] = [];
+    for (const t of types) {
+      const pool = pools[t];
+      const r = pool[i % Math.max(1, pool.length)];
+      if (!r) continue;
+      const portion = Math.min(1.8, Math.max(0.6, Math.round(((a.kcal * PART[t]) / r.kcal) * 10) / 10));
+      r.ingredients.forEach((x) => ingredients.add(x));
+      repas.push({
+        repas: t, nom: r.nom, portion,
+        kcal: Math.round(r.kcal * portion), p: Math.round(r.p * portion),
+        g: Math.round(r.g * portion), l: Math.round(r.l * portion),
+      });
+    }
+    return { jour, repas, kcal: repas.reduce((s, x) => s + x.kcal, 0) };
+  });
+  return { jours, courses: [...ingredients].sort((x, y) => x.localeCompare(y, "fr")), eau: Math.round(p.poids * 0.033 * 10) / 10, manque };
 }

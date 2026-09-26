@@ -6,7 +6,9 @@ import { adapterSeance as adapterSeanceIA } from "@/lib/adapter-seance.functions
 import {
   adapterSeance,
   analyser,
+  genererNutrition,
   genererProgramme,
+  LABEL_REPAS,
   NOTE_MORPHO,
   type CheckIn,
   type Equipement,
@@ -49,7 +51,14 @@ const MORPHO: [Profil["morphologie"], string, string][] = [
   ["endomorphe", "Endomorphe", "Corpulence forte, prend du poids facilement"],
 ];
 
+const REGIMES: [Profil["regime"], string][] = [["omnivore", "Omnivore"], ["vegetarien", "Végétarien"], ["vegan", "Vegan"]];
+const ALLERGIES: [Profil["allergies"][number], string][] = [
+  ["gluten", "Gluten"], ["lactose", "Lactose"], ["oeufs", "Œufs"], ["arachides", "Arachides"], ["poisson", "Poisson"],
+];
+
 const INIT: Profil = {
+  regime: "omnivore",
+  allergies: [],
   morphologie: "mesomorphe",
   prenom: "", sexe: "H", age: 30, taille: 175, poids: 75, objectif: "maintien", niveau: "debutant",
   jours: 3, duree: 45, equipement: [], blessures: [], pathologies: [], activite: 1.375,
@@ -81,15 +90,18 @@ function Questionnaire() {
 
   // Reprend le profil déjà enregistré.
   // La morphologie n'a pas encore de colonne en base : mémorisée localement.
+  // Morphologie, régime et allergies n'ont pas encore de colonne en base : mémorisés localement.
   useEffect(() => {
     try {
-      const m = localStorage.getItem("morphologie") as Profil["morphologie"] | null;
-      if (m) setP((x) => ({ ...x, morphologie: m }));
+      const raw = localStorage.getItem("extras");
+      if (raw) setP((x) => ({ ...x, ...(JSON.parse(raw) as Pick<Profil, "morphologie" | "regime" | "allergies">) }));
     } catch { /* stockage indisponible */ }
   }, []);
   useEffect(() => {
-    try { localStorage.setItem("morphologie", p.morphologie); } catch { /* ignore */ }
-  }, [p.morphologie]);
+    try {
+      localStorage.setItem("extras", JSON.stringify({ morphologie: p.morphologie, regime: p.regime, allergies: p.allergies }));
+    } catch { /* ignore */ }
+  }, [p.morphologie, p.regime, p.allergies]);
 
   useEffect(() => {
     if (!session) return;
@@ -176,6 +188,7 @@ function Questionnaire() {
   const fini = etape === 4;
   const analyse = useMemo(() => (fini ? analyser(p) : null), [fini, p]);
   const programme = useMemo(() => (fini ? genererProgramme(p) : []), [fini, p]);
+  const nutrition = useMemo(() => (analyse ? genererNutrition(p, analyse) : null), [analyse, p]);
   const adapte = useMemo(
     () => (fini && programme[0] ? adapterSeance(programme[0], ci, p) : null),
     [fini, programme, ci, p],
@@ -187,7 +200,15 @@ function Questionnaire() {
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-12 sm:px-6">
-      <a href="/" className="text-sm text-muted-foreground hover:text-primary">← Accueil</a>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <a href="/" className="hover:text-primary">← Accueil</a>
+        <button
+          className="hover:text-primary"
+          onClick={() => void supabase.auth.signOut().then(() => window.location.replace("/connexion"))}
+        >
+          Se déconnecter
+        </button>
+      </div>
       <h1 className="mt-4 font-display text-5xl">{fini ? `Ton plan${p.prenom ? `, ${p.prenom}` : ""}` : "Questionnaire"}</h1>
 
       {!fini && (
@@ -250,6 +271,14 @@ function Questionnaire() {
                 <div className="flex flex-wrap gap-2">
                   {ZONES.map(([v, l]) => <button key={v} className={chip(p.blessures.includes(v))} onClick={() => set("blessures", toggle(p.blessures, v))}>{l}</button>)}
                 </div>
+                <p className="text-sm text-muted-foreground">Régime alimentaire</p>
+                <div className="flex flex-wrap gap-2">
+                  {REGIMES.map(([v, l]) => <button key={v} className={chip(p.regime === v)} onClick={() => set("regime", v)}>{l}</button>)}
+                </div>
+                <p className="text-sm text-muted-foreground">Allergies / intolérances</p>
+                <div className="flex flex-wrap gap-2">
+                  {ALLERGIES.map(([v, l]) => <button key={v} className={chip(p.allergies.includes(v))} onClick={() => set("allergies", toggle(p.allergies, v))}>{l}</button>)}
+                </div>
                 <p className="text-sm text-muted-foreground">Pathologies</p>
                 <div className="flex flex-wrap gap-2">
                   {PATHO.map((v) => <button key={v} className={chip(p.pathologies.includes(v))} onClick={() => set("pathologies", toggle(p.pathologies, v))}>{v}</button>)}
@@ -311,7 +340,17 @@ function Questionnaire() {
                 <ul className="mt-3 space-y-2 text-sm">
                   {s.exercices.map((e, j) => (
                     <li key={j} className="flex justify-between gap-3 rounded-lg bg-background px-3 py-2">
-                      <span><b>{e.nom}</b> <span className="text-muted-foreground">{e.muscles}</span></span>
+                      <span>
+                        <a
+                          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${e.nom} exercice technique`)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold underline decoration-primary/40 hover:text-primary"
+                        >
+                          {e.nom}
+                        </a>{" "}
+                        <span className="text-muted-foreground">{e.muscles}</span>
+                      </span>
                       <span className="shrink-0 text-primary">
                         {e.series > 1 ? `${e.series} × ${e.reps}` : e.reps}
                         {e.repos > 0 && <span className="text-muted-foreground"> · repos {e.repos}s</span>}
@@ -322,6 +361,41 @@ function Questionnaire() {
               </article>
             ))}
           </section>
+
+          {nutrition && (
+            <section className="space-y-4">
+              <h2 className="font-display text-3xl">Plan nutritionnel</h2>
+              <p className="text-sm text-muted-foreground">
+                Cible {analyse.kcal} kcal/jour · eau {nutrition.eau} L/jour · recettes adaptées à ton régime et à tes allergies.
+              </p>
+              {nutrition.manque.length > 0 && (
+                <p className="text-sm text-destructive">Aucune recette compatible pour : {nutrition.manque.join(", ")}.</p>
+              )}
+              <div className="grid gap-4 md:grid-cols-2">
+                {nutrition.jours.map((j) => (
+                  <article key={j.jour} className="rounded-2xl border border-border bg-card p-5">
+                    <div className="flex items-baseline justify-between">
+                      <h3 className="font-display text-2xl">{j.jour}</h3>
+                      <span className="text-xs text-muted-foreground">{j.kcal} kcal</span>
+                    </div>
+                    <ul className="mt-3 space-y-2 text-sm">
+                      {j.repas.map((r) => (
+                        <li key={r.repas} className="rounded-lg bg-background px-3 py-2">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-primary">{LABEL_REPAS[r.repas]} · {r.kcal} kcal</p>
+                          <p>{r.nom} <span className="text-muted-foreground">(×{r.portion})</span></p>
+                          <p className="text-xs text-muted-foreground">P {r.p} g · G {r.g} g · L {r.l} g</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="font-display text-2xl">Liste de courses</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{nutrition.courses.join(" · ")}</p>
+              </div>
+            </section>
+          )}
 
           <section className="rounded-2xl border border-primary/40 bg-card p-5">
             <h2 className="font-display text-3xl">Check-in du jour</h2>
