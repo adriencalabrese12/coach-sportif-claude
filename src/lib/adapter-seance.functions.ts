@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 
 const inputSchema = z.object({
   seance: z.unknown(),
@@ -83,7 +84,7 @@ export const adapterSeance = createServerFn({ method: "POST" })
       throw new Error("Réponse IA invalide");
     }
     return {
-      seance: parsed.seance ?? data.seance,
+      seance: (parsed.seance ?? data.seance) as Json,
       justification: String(parsed.justification ?? ""),
     };
   });
