@@ -43,7 +43,7 @@ export const adapterSeance = createServerFn({ method: "POST" })
         reasoning: { effort: "low" },
         text: { format: { type: "json_object" } },
         instructions: SYSTEM,
-        input: `Séance du jour :\n${JSON.stringify(data.seance)}\n\nCheck-in :\n${JSON.stringify(data.checkin)}`,
+        input: `Réponds en json.\nSéance du jour :\n${JSON.stringify(data.seance)}\n\nCheck-in :\n${JSON.stringify(data.checkin)}`,
       }),
     });
 
