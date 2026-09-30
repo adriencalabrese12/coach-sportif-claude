@@ -116,13 +116,3 @@
 @utility glow-primary {
   box-shadow: 0 0 40px oklch(0.9 0.24 125 / 25%);
 }
-
-/* Export PDF (impression) : une section � la fois, fond clair. */
-@media print {
-  :root { --background: #fff; --foreground: #111; --card: #fff; --card-foreground: #111; --border: #ccc; --muted-foreground: #555; --primary: #2a6b00; }
-  .no-print { display: none !important; }
-  body[data-print="programme"] [data-section]:not([data-section="programme"]),
-  body[data-print="menu"] [data-section]:not([data-section="menu"]),
-  body[data-print="courses"] [data-section]:not([data-section="courses"]) { display: none !important; }
-  article { break-inside: avoid; }
-}
