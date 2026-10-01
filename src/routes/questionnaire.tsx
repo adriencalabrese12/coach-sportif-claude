@@ -1,16 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { SubscriptionGate } from "@/components/subscription-gate";
+import { useSubscription } from "@/hooks/use-subscription";
 import { adapterSeance as adapterSeanceIA } from "@/lib/adapter-seance.functions";
+import { appliquerCheckin, calculerPlan } from "@/lib/contenu.functions";
+import { pageHead } from "@/lib/site";
 import {
-  adapterSeance,
-  analyser,
-  genererNutrition,
-  genererProgramme,
   LABEL_REPAS,
   NOTE_MORPHO,
+  type Analyse,
   type CheckIn,
+  type PlanNutrition,
+  type SeanceProg,
   type Equipement,
   type Objectif,
   type Niveau,
@@ -19,13 +22,18 @@ import {
 } from "@/lib/coach";
 
 export const Route = createFileRoute("/questionnaire")({
-  head: () => ({
-    meta: [
-      { title: "Questionnaire — Coach Sportif Personnalisé" },
-      { name: "description", content: "Réponds au questionnaire et obtiens ton programme et tes calories cibles." },
-    ],
-  }),
-  component: Questionnaire,
+  head: () =>
+    pageHead({
+      title: "Questionnaire détaillé — Coach.Pro",
+      description: "Espace abonné : questionnaire détaillé et analyse de ton profil.",
+      path: "/questionnaire",
+      noindex: true,
+    }),
+  component: () => (
+    <SubscriptionGate min="essentiel">
+      <Questionnaire />
+    </SubscriptionGate>
+  ),
 });
 
 const OBJECTIFS: [Objectif, string][] = [
@@ -83,6 +91,9 @@ function Questionnaire() {
   const [iaEnCours, setIaEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const session = useSession();
+  const sub = useSubscription();
+  const [plan, setPlan] = useState<{ analyse: Analyse; programme: SeanceProg[]; nutrition: PlanNutrition | null } | null>(null);
+  const [adapte, setAdapte] = useState<{ seance: SeanceProg; notes: string[] } | null>(null);
 
   useEffect(() => {
     if (session === null) window.location.replace("/connexion");
@@ -133,40 +144,51 @@ function Questionnaire() {
 
   async function terminer() {
     setEtape(4);
-    if (!session) return;
+    setPlan(null);
+    setAdapte(null);
     setErreur(null);
-    const { error } = await supabase.from("profiles").upsert({
-      user_id: session.user.id,
-      prenom: p.prenom,
-      sexe: p.sexe,
-      age: p.age,
-      taille: p.taille,
-      poids: p.poids,
-      objectif: p.objectif,
-      niveau: p.niveau,
-      jours: p.jours,
-      duree: p.duree,
-      equipement: p.equipement,
-      blessures: p.blessures,
-      pathologies: p.pathologies,
-      activite: String(p.activite),
-      updated_at: new Date().toISOString(),
-    });
-    if (error) return setErreur("Profil non enregistré : " + error.message);
-    const { error: e2 } = await supabase
-      .from("programs")
-      .insert({ user_id: session.user.id, seances: JSON.parse(JSON.stringify(genererProgramme(p))) });
-    if (e2) setErreur("Programme non enregistré : " + e2.message);
+    if (!session) return;
+    try {
+      const { error } = await supabase.from("profiles").upsert({
+        user_id: session.user.id,
+        prenom: p.prenom,
+        sexe: p.sexe,
+        age: p.age,
+        taille: p.taille,
+        poids: p.poids,
+        objectif: p.objectif,
+        niveau: p.niveau,
+        jours: p.jours,
+        duree: p.duree,
+        equipement: p.equipement,
+        blessures: p.blessures,
+        pathologies: p.pathologies,
+        activite: String(p.activite),
+        updated_at: new Date().toISOString(),
+      });
+      if (error) throw new Error("Profil non enregistré : " + error.message);
+      // Calcul côté serveur : l'abonnement est vérifié avant de renvoyer le plan.
+      const r = await calculerPlan({ data: p });
+      setPlan(r);
+      const { error: e2 } = await supabase
+        .from("programs")
+        .insert({ user_id: session.user.id, seances: JSON.parse(JSON.stringify(r.programme)) });
+      if (e2) throw new Error("Programme non enregistré : " + e2.message);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur lors du calcul de ton plan.");
+    }
   }
 
   async function demanderIA() {
-    if (!programme[0] || !session) return;
+    if (!plan?.programme[0] || !session) return;
     setIaEnCours(true);
     setErreur(null);
     setIa(null);
     try {
+      const regles = await appliquerCheckin({ data: { profil: p, checkin: ci } });
+      setAdapte(regles);
       const checkin = { fatigue: ci.fatigue, sommeil: ci.sommeil, temps: ci.temps, douleur: ci.douleur ?? null, envie };
-      const res = await adapterSeanceIA({ data: { seance: programme[0], checkin: checkin as never } });
+      const res = await adapterSeanceIA({ data: { seance: plan.programme[0], checkin: checkin as never } });
       setIa({ seance: res.seance, justification: res.justification });
       await supabase.from("checkins").insert({
         user_id: session.user.id,
@@ -186,13 +208,9 @@ function Questionnaire() {
     set(k, Number(e.target.value));
 
   const fini = etape === 4;
-  const analyse = useMemo(() => (fini ? analyser(p) : null), [fini, p]);
-  const programme = useMemo(() => (fini ? genererProgramme(p) : []), [fini, p]);
-  const nutrition = useMemo(() => (analyse ? genererNutrition(p, analyse) : null), [analyse, p]);
-  const adapte = useMemo(
-    () => (fini && programme[0] ? adapterSeance(programme[0], ci, p) : null),
-    [fini, programme, ci, p],
-  );
+  const analyse = plan?.analyse ?? null;
+  const programme = plan?.programme ?? [];
+  const nutrition = plan?.nutrition ?? null;
 
   const titres = ["Profil", "Objectif", "Matériel & santé", "Disponibilité"];
 
@@ -304,6 +322,13 @@ function Questionnaire() {
         </>
       )}
 
+      {fini && !plan && (
+        erreur ? (
+          <p role="alert" className="mt-6 text-destructive">{erreur}</p>
+        ) : (
+          <p role="status" aria-busy="true" className="mt-6 text-muted-foreground">Calcul de ton plan…</p>
+        )
+      )}
       {fini && analyse && (
         <div className="mt-6 space-y-8">
           {analyse.avisMedical && (
@@ -397,6 +422,7 @@ function Questionnaire() {
             </section>
           )}
 
+          {sub.has("premium") ? (
           <section className="rounded-2xl border border-primary/40 bg-card p-5">
             <h2 className="font-display text-3xl">Check-in du jour</h2>
             <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
@@ -447,6 +473,11 @@ function Questionnaire() {
               </div>
             )}
           </section>
+          ) : (
+            <p className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+              Plan nutritionnel et check-in quotidien : offre Premium. <a href="/#tarifs" className="text-primary underline">Voir les offres</a>
+            </p>
+          )}
           <button className={chip(false)} onClick={() => { setEtape(0); }}>Modifier mes réponses</button>
         </div>
       )}

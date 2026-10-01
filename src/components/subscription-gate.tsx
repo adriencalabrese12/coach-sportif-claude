@@ -8,8 +8,8 @@ import { PLANS, type PlanId } from "@/lib/plans";
  * Garde de route (côté interface) : redirige vers /connexion ou affiche l'invitation à s'abonner.
  * Les données protégées restent de toute façon refusées par les server functions et la RLS.
  */
-export function SubscriptionGate({ min, children }: { min: PlanId; children: ReactNode }) {
-  const sub = useSubscription();
+export function SubscriptionGate({ min, activating, children }: { min: PlanId; activating?: boolean; children: ReactNode }) {
+  const sub = useSubscription({ poll: activating });
 
   useEffect(() => {
     if (sub.session === null) window.location.replace("/connexion");
@@ -26,6 +26,13 @@ export function SubscriptionGate({ min, children }: { min: PlanId; children: Rea
     return (
       <main role="alert" className="grid min-h-screen place-items-center p-12 text-center text-destructive">
         Impossible de vérifier ton abonnement. Recharge la page.
+      </main>
+    );
+  }
+  if (activating && !sub.active) {
+    return (
+      <main role="status" aria-busy="true" className="grid min-h-screen place-items-center p-12 text-center text-muted-foreground">
+        Paiement reçu : activation de ton abonnement en cours…
       </main>
     );
   }

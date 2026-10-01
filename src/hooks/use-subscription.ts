@@ -7,11 +7,15 @@ import { isPlanId, PLAN_RANK, type PlanId } from "@/lib/plans";
  * Statut d'abonnement pour l'interface (lecture RLS de sa propre ligne).
  * Ce n'est qu'un confort d'affichage : l'accès réel est contrôlé côté serveur.
  */
-export function useSubscription() {
+export function useSubscription(opts: { poll?: boolean } = {}) {
   const session = useSession();
   const userId = session?.user.id;
   const q = useQuery({
     enabled: !!userId,
+    refetchInterval: (query) => {
+      const st = query.state.data?.status;
+      return opts.poll && st !== "active" && st !== "trialing" ? 3000 : false;
+    },
     queryKey: ["subscription", userId],
     queryFn: async () => {
       const { data, error } = await supabase

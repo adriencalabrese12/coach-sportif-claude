@@ -1,21 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Activity, Check, ChevronRight, Dumbbell, Flame, HeartPulse, Lock, Target, Zap } from "lucide-react";
+import { Activity, Check, Star, ChevronRight, Dumbbell, Flame, HeartPulse, Lock, Target, Zap } from "lucide-react";
 import heroImage from "@/assets/hero-coach.webp";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { FAQ } from "@/content/faq";
 import { landingJsonLd } from "@/lib/jsonld";
 import { PLANS } from "@/lib/plans";
+import { useSubscription } from "@/hooks/use-subscription";
+import { getAvisPublies } from "@/lib/reviews.functions";
 import { pageHead } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
-  head: () =>
+  loader: () => getAvisPublies(),
+  head: ({ loaderData }) =>
     pageHead({
       title: "Coach sportif personnalisé en ligne — Programme d'entraînement sur mesure | Coach.Pro",
       description:
         "Coach sportif en ligne : génère un programme d'entraînement personnalisé (perte de poids, prise de masse, remise en forme, endurance) selon ton niveau et tes jours disponibles.",
       path: "/",
-      jsonLd: [landingJsonLd()],
+      jsonLd: [landingJsonLd(loaderData?.stats)],
     }),
   component: Index,
 });
@@ -59,6 +62,8 @@ const h2 = "font-display text-[clamp(40px,6vw,60px)] leading-none";
 const label = "mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground first:mt-0";
 
 function Index() {
+  const { avis, stats } = Route.useLoaderData();
+  const sub = useSubscription();
   const [objectif, setObjectif] = useState<Objectif>("forme");
   const [niveau, setNiveau] = useState<Niveau>("debutant");
   const [jours, setJours] = useState(3);
@@ -217,10 +222,10 @@ function Index() {
                 Les séances détaillées, les exercices, les séries et les temps de repos sont accessibles avec un abonnement.
               </p>
               <a
-                href="#tarifs"
+                href={sub.active ? `/programme?objectif=${objectif}&niveau=${niveau}&jours=${jours}` : "#tarifs"}
                 className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform hover:scale-105"
               >
-                Voir les abonnements <ChevronRight aria-hidden="true" className="size-4" />
+                {sub.active ? "Voir ma semaine" : "Voir les abonnements"} <ChevronRight aria-hidden="true" className="size-4" />
               </a>
             </div>
           )}
@@ -287,6 +292,36 @@ function Index() {
             Paiement sécurisé par Stripe : tes coordonnées bancaires ne transitent jamais par ce site.
           </p>
         </section>
+
+        {/* Avis d'abonnés vérifiés : affichés uniquement s'il en existe de publiés */}
+        {stats && avis.length > 0 && (
+          <section id="avis" aria-labelledby="h-avis" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+            <p className={eyebrow}>Avis</p>
+            <h2 id="h-avis" className={h2}>Ce que disent nos abonnés</h2>
+            <p className="mt-3 text-muted-foreground">
+              Note moyenne : {stats.average}/5 sur {stats.count} avis d'abonnés vérifiés.
+            </p>
+            <ul className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {avis.map((a) => (
+                <li key={a.id} className="rounded-2xl border border-border bg-card p-6">
+                  <p className="flex gap-0.5" role="img" aria-label={`Note : ${a.note} sur 5`}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        aria-hidden="true"
+                        className={`size-4 ${n <= a.note ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                      />
+                    ))}
+                  </p>
+                  {a.commentaire && <p className="mt-3 text-sm">{a.commentaire}</p>}
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {a.auteur ? `${a.auteur} · ` : ""}Avis d'abonné vérifié
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* FAQ */}
         <section id="faq" className="scroll-mt-24 border-t border-border bg-card/50">
