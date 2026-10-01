@@ -2,15 +2,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { z } from "zod";
+import { pageHead } from "@/lib/site";
 
 export const Route = createFileRoute("/connexion")({
-  head: () => ({ meta: [{ title: "Connexion — Coach Sportif Personnalisé" }] }),
+  validateSearch: z.object({ plan: z.enum(["decouverte", "essentiel", "premium"]).optional().catch(undefined) }),
+  head: () =>
+    pageHead({
+      title: "Connexion — Coach.Pro",
+      description: "Connecte-toi ou crée ton compte Coach.Pro.",
+      path: "/connexion",
+      noindex: true,
+    }),
   component: Connexion,
 });
 
-const field = "w-full rounded-lg border border-input bg-background px-3 py-2";
+const field = "min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2";
 
 function Connexion() {
+  const { plan } = Route.useSearch();
+  const apres = plan ? `/abonnement?plan=${plan}` : "/programme";
   const session = useSession();
   const [mode, setMode] = useState<"connexion" | "inscription">("connexion");
   const [email, setEmail] = useState("");
@@ -19,8 +30,8 @@ function Connexion() {
   const [envoi, setEnvoi] = useState(false);
 
   useEffect(() => {
-    if (session) window.location.replace("/questionnaire");
-  }, [session]);
+    if (session) window.location.replace(apres);
+  }, [session, apres]);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
@@ -30,10 +41,10 @@ function Connexion() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password: mdp,
-        options: { emailRedirectTo: `${window.location.origin}/questionnaire` },
+        options: { emailRedirectTo: `${window.location.origin}${apres}` },
       });
       if (error) setMsg({ ok: false, texte: error.message });
-      else if (data.session) window.location.replace("/questionnaire");
+      else if (data.session) window.location.replace(apres);
       else setMsg({ ok: true, texte: "Compte créé. Clique sur le lien reçu par email pour vérifier ton adresse, puis connecte-toi." });
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password: mdp });

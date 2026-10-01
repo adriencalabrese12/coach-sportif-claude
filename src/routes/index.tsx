@@ -1,41 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import {
-  Dumbbell,
-  Flame,
-  HeartPulse,
-  Zap,
-  ChevronRight,
-  Timer,
-  Repeat,
-  Activity,
-  Target,
-  TrendingUp,
-} from "lucide-react";
-import heroImage from "@/assets/hero-coach.jpg";
+import { useState } from "react";
+import { Activity, Check, Star, ChevronRight, Dumbbell, Flame, HeartPulse, Lock, Target, Zap } from "lucide-react";
+import heroImage from "@/assets/hero-coach.webp";
+import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { FAQ } from "@/content/faq";
+import { landingJsonLd } from "@/lib/jsonld";
+import { PLANS } from "@/lib/plans";
+import { useSubscription } from "@/hooks/use-subscription";
+import { getAvisPublies } from "@/lib/reviews.functions";
+import { pageHead } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Coach Sportif Personnalisé — Programme sur mesure" },
-      {
-        name: "description",
-        content:
-          "Génère ton programme d'entraînement personnalisé : perte de poids, prise de masse, remise en forme ou endurance. Séances détaillées, exercices, séries et répétitions.",
-      },
-      {
-        property: "og:title",
-        content: "Coach Sportif Personnalisé — Programme sur mesure",
-      },
-      {
-        property: "og:description",
-        content:
-          "Génère ton programme d'entraînement personnalisé selon ton objectif, ton niveau et ta disponibilité.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  loader: () => getAvisPublies(),
+  head: ({ loaderData }) =>
+    pageHead({
+      title: "Coach sportif personnalisé en ligne — Programme d'entraînement sur mesure | Coach.Pro",
+      description:
+        "Coach sportif en ligne : génère un programme d'entraînement personnalisé (perte de poids, prise de masse, remise en forme, endurance) selon ton niveau et tes jours disponibles.",
+      path: "/",
+      jsonLd: [landingJsonLd(loaderData?.stats)],
+    }),
   component: Index,
 });
 
@@ -55,627 +39,308 @@ const NIVEAUX: { id: Niveau; label: string }[] = [
   { id: "avance", label: "Avancé" },
 ];
 
-interface Exercice {
-  nom: string;
-  series: string;
-  repos: string;
-}
-
-interface Seance {
-  titre: string;
-  focus: string;
-  duree: string;
-  exercices: Exercice[];
-}
-
-const REPOS: Record<Niveau, string> = {
-  debutant: "90 s",
-  intermediaire: "75 s",
-  avance: "60 s",
-};
-
-function reps(niveau: Niveau, base: string): string {
-  if (niveau === "debutant") return `3 x ${base}`;
-  if (niveau === "intermediaire") return `4 x ${base}`;
-  return `5 x ${base}`;
-}
-
-const SEANCES: Record<Objectif, Seance[]> = {
-  perte: [
-    {
-      titre: "Circuit Brûle-Graisses",
-      focus: "Full body HIIT",
-      duree: "40 min",
-      exercices: [
-        { nom: "Burpees", series: "4 x 12", repos: "45 s" },
-        { nom: "Squats sautés", series: "4 x 15", repos: "45 s" },
-        { nom: "Mountain climbers", series: "4 x 30 s", repos: "30 s" },
-        { nom: "Fentes alternées", series: "4 x 12 / jambe", repos: "45 s" },
-        { nom: "Planche dynamique", series: "3 x 40 s", repos: "30 s" },
-      ],
-    },
-    {
-      titre: "Cardio Intensif",
-      focus: "Interval training",
-      duree: "35 min",
-      exercices: [
-        { nom: "Corde à sauter", series: "5 x 2 min", repos: "60 s" },
-        { nom: "Sprints sur place", series: "6 x 30 s", repos: "30 s" },
-        { nom: "Jumping jacks", series: "4 x 45 s", repos: "30 s" },
-        { nom: "Gainage latéral", series: "3 x 30 s / côté", repos: "30 s" },
-      ],
-    },
-    {
-      titre: "Renforcement Métabolique",
-      focus: "Haut du corps + core",
-      duree: "45 min",
-      exercices: [
-        { nom: "Pompes", series: "4 x 12", repos: "60 s" },
-        { nom: "Rowing haltères", series: "4 x 12", repos: "60 s" },
-        { nom: "Développé épaules", series: "3 x 12", repos: "60 s" },
-        { nom: "Crunchs inversés", series: "4 x 15", repos: "45 s" },
-        { nom: "Russian twists", series: "3 x 20", repos: "45 s" },
-      ],
-    },
-    {
-      titre: "Bas du Corps Tonique",
-      focus: "Jambes + fessiers",
-      duree: "45 min",
-      exercices: [
-        { nom: "Squats goblet", series: "4 x 15", repos: "60 s" },
-        { nom: "Soulevé de terre jambes tendues", series: "4 x 12", repos: "60 s" },
-        { nom: "Hip thrust", series: "4 x 15", repos: "60 s" },
-        { nom: "Montées sur banc", series: "3 x 12 / jambe", repos: "45 s" },
-        { nom: "Mollets debout", series: "4 x 20", repos: "30 s" },
-      ],
-    },
-    {
-      titre: "HIIT Tabata",
-      focus: "Brûlure maximale",
-      duree: "30 min",
-      exercices: [
-        { nom: "Squats rapides", series: "8 x 20 s", repos: "10 s" },
-        { nom: "Pompes explosives", series: "8 x 20 s", repos: "10 s" },
-        { nom: "Fentes sautées", series: "8 x 20 s", repos: "10 s" },
-        { nom: "Planche à touchés d'épaules", series: "8 x 20 s", repos: "10 s" },
-      ],
-    },
-    {
-      titre: "Cardio Endurance Active",
-      focus: "Récupération active",
-      duree: "40 min",
-      exercices: [
-        { nom: "Marche rapide inclinée", series: "1 x 20 min", repos: "—" },
-        { nom: "Vélo elliptique", series: "1 x 15 min", repos: "—" },
-        { nom: "Étirements dynamiques", series: "1 x 5 min", repos: "—" },
-      ],
-    },
-  ],
-  masse: [
-    {
-      titre: "Pectoraux & Triceps",
-      focus: "Push — haut du corps",
-      duree: "60 min",
-      exercices: [
-        { nom: "Développé couché barre", series: "4 x 8", repos: "90 s" },
-        { nom: "Développé incliné haltères", series: "4 x 10", repos: "90 s" },
-        { nom: "Écartés poulie", series: "3 x 12", repos: "60 s" },
-        { nom: "Dips lestés", series: "3 x 10", repos: "90 s" },
-        { nom: "Extensions triceps poulie", series: "4 x 12", repos: "60 s" },
-      ],
-    },
-    {
-      titre: "Dos & Biceps",
-      focus: "Pull — haut du corps",
-      duree: "60 min",
-      exercices: [
-        { nom: "Tractions", series: "4 x 8", repos: "90 s" },
-        { nom: "Rowing barre", series: "4 x 10", repos: "90 s" },
-        { nom: "Tirage vertical", series: "3 x 12", repos: "75 s" },
-        { nom: "Curl barre EZ", series: "4 x 10", repos: "60 s" },
-        { nom: "Curl marteau", series: "3 x 12", repos: "60 s" },
-      ],
-    },
-    {
-      titre: "Jambes Complètes",
-      focus: "Quadriceps + ischios",
-      duree: "65 min",
-      exercices: [
-        { nom: "Squat barre", series: "4 x 8", repos: "120 s" },
-        { nom: "Presse à cuisses", series: "4 x 12", repos: "90 s" },
-        { nom: "Soulevé de terre roumain", series: "4 x 10", repos: "90 s" },
-        { nom: "Leg curl", series: "3 x 12", repos: "60 s" },
-        { nom: "Mollets assis", series: "4 x 15", repos: "45 s" },
-      ],
-    },
-    {
-      titre: "Épaules & Abdos",
-      focus: "Deltoïdes + sangle abdominale",
-      duree: "55 min",
-      exercices: [
-        { nom: "Développé militaire", series: "4 x 8", repos: "90 s" },
-        { nom: "Élévations latérales", series: "4 x 12", repos: "60 s" },
-        { nom: "Oiseau haltères", series: "3 x 12", repos: "60 s" },
-        { nom: "Shrugs barre", series: "4 x 12", repos: "60 s" },
-        { nom: "Relevés de jambes suspendu", series: "4 x 12", repos: "60 s" },
-      ],
-    },
-    {
-      titre: "Full Body Force",
-      focus: "Mouvements composés",
-      duree: "60 min",
-      exercices: [
-        { nom: "Soulevé de terre", series: "5 x 5", repos: "150 s" },
-        { nom: "Développé couché", series: "4 x 6", repos: "120 s" },
-        { nom: "Squat", series: "4 x 6", repos: "120 s" },
-        { nom: "Tractions lestées", series: "3 x 6", repos: "90 s" },
-      ],
-    },
-    {
-      titre: "Bras & Finition",
-      focus: "Volume bras",
-      duree: "45 min",
-      exercices: [
-        { nom: "Curl incliné", series: "4 x 10", repos: "60 s" },
-        { nom: "Barre au front", series: "4 x 10", repos: "60 s" },
-        { nom: "Curl concentration", series: "3 x 12", repos: "45 s" },
-        { nom: "Extensions nuque", series: "3 x 12", repos: "45 s" },
-        { nom: "Pompes serrées", series: "3 x max", repos: "60 s" },
-      ],
-    },
-  ],
-  forme: [
-    {
-      titre: "Réveil Musculaire",
-      focus: "Full body doux",
-      duree: "35 min",
-      exercices: [
-        { nom: "Squats poids du corps", series: "3 x 12", repos: "60 s" },
-        { nom: "Pompes sur genoux", series: "3 x 10", repos: "60 s" },
-        { nom: "Rowing élastique", series: "3 x 12", repos: "60 s" },
-        { nom: "Planche", series: "3 x 30 s", repos: "45 s" },
-      ],
-    },
-    {
-      titre: "Cardio Doux",
-      focus: "Endurance fondamentale",
-      duree: "30 min",
-      exercices: [
-        { nom: "Marche rapide ou vélo", series: "1 x 20 min", repos: "—" },
-        { nom: "Step bas", series: "3 x 2 min", repos: "60 s" },
-        { nom: "Respiration & étirements", series: "1 x 5 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Renfo & Mobilité",
-      focus: "Posture + gainage",
-      duree: "40 min",
-      exercices: [
-        { nom: "Fentes arrière", series: "3 x 10 / jambe", repos: "60 s" },
-        { nom: "Pont fessier", series: "3 x 15", repos: "45 s" },
-        { nom: "Gainage latéral", series: "3 x 20 s / côté", repos: "45 s" },
-        { nom: "Oiseau-chien", series: "3 x 10 / côté", repos: "45 s" },
-        { nom: "Étirements actifs", series: "1 x 8 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Circuit Tonicité",
-      focus: "Tonification générale",
-      duree: "40 min",
-      exercices: [
-        { nom: "Squat + press épaules", series: "3 x 12", repos: "60 s" },
-        { nom: "Soulevé de terre léger", series: "3 x 12", repos: "60 s" },
-        { nom: "Pompes inclinées", series: "3 x 12", repos: "60 s" },
-        { nom: "Mountain climbers lents", series: "3 x 30 s", repos: "45 s" },
-      ],
-    },
-    {
-      titre: "Cardio Ludique",
-      focus: "Intervalles modérés",
-      duree: "35 min",
-      exercices: [
-        { nom: "Corde à sauter", series: "4 x 1 min", repos: "60 s" },
-        { nom: "Jumping jacks", series: "4 x 40 s", repos: "40 s" },
-        { nom: "Montées de genoux", series: "4 x 30 s", repos: "40 s" },
-        { nom: "Marche récupération", series: "1 x 5 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Stretching & Core",
-      focus: "Récupération",
-      duree: "30 min",
-      exercices: [
-        { nom: "Planche", series: "3 x 40 s", repos: "45 s" },
-        { nom: "Crunchs", series: "3 x 15", repos: "45 s" },
-        { nom: "Yoga flow doux", series: "1 x 15 min", repos: "—" },
-      ],
-    },
-  ],
-  endurance: [
-    {
-      titre: "Endurance Fondamentale",
-      focus: "Zone 2 cardio",
-      duree: "45 min",
-      exercices: [
-        { nom: "Course ou vélo zone 2", series: "1 x 35 min", repos: "—" },
-        { nom: "Gainage", series: "3 x 45 s", repos: "45 s" },
-        { nom: "Étirements", series: "1 x 10 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Intervalles Courts",
-      focus: "VMA — 30/30",
-      duree: "40 min",
-      exercices: [
-        { nom: "Échauffement footing", series: "1 x 10 min", repos: "—" },
-        { nom: "30 s vite / 30 s lent", series: "2 x 8 répétitions", repos: "3 min entre séries" },
-        { nom: "Retour au calme", series: "1 x 10 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Renfo Spécifique",
-      focus: "Muscler pour durer",
-      duree: "45 min",
-      exercices: [
-        { nom: "Squats bulgares", series: "4 x 10 / jambe", repos: "60 s" },
-        { nom: "Fentes marchées", series: "3 x 20 pas", repos: "60 s" },
-        { nom: "Montées de genoux lestées", series: "4 x 30 s", repos: "45 s" },
-        { nom: "Gainage dynamique", series: "3 x 40 s", repos: "45 s" },
-      ],
-    },
-    {
-      titre: "Sortie Longue",
-      focus: "Volume endurance",
-      duree: "60 min",
-      exercices: [
-        { nom: "Course / vélo long", series: "1 x 50 min", repos: "—" },
-        { nom: "Gainage latéral", series: "3 x 30 s / côté", repos: "30 s" },
-        { nom: "Étirements complets", series: "1 x 10 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Seuil & Tempo",
-      focus: "Allure soutenue",
-      duree: "45 min",
-      exercices: [
-        { nom: "Échauffement", series: "1 x 10 min", repos: "—" },
-        { nom: "Tempo run", series: "3 x 8 min", repos: "2 min trot" },
-        { nom: "Retour au calme", series: "1 x 10 min", repos: "—" },
-      ],
-    },
-    {
-      titre: "Cross Training Cardio",
-      focus: "Variété + explosivité",
-      duree: "40 min",
-      exercices: [
-        { nom: "Rameur ou elliptique", series: "4 x 5 min", repos: "90 s" },
-        { nom: "Burpees", series: "3 x 10", repos: "60 s" },
-        { nom: "Corde à sauter", series: "4 x 1 min", repos: "45 s" },
-      ],
-    },
-  ],
-};
-
-const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
-
-const BIBLIOTHEQUE = [
-  { nom: "Squat", cible: "Quadriceps, fessiers", niveau: "Tous niveaux" },
-  { nom: "Soulevé de terre", cible: "Dos, ischios, fessiers", niveau: "Intermédiaire+" },
-  { nom: "Développé couché", cible: "Pectoraux, triceps", niveau: "Tous niveaux" },
-  { nom: "Tractions", cible: "Dos, biceps", niveau: "Intermédiaire+" },
-  { nom: "Burpees", cible: "Full body, cardio", niveau: "Tous niveaux" },
-  { nom: "Fentes", cible: "Jambes, équilibre", niveau: "Tous niveaux" },
-  { nom: "Planche", cible: "Abdominaux, gainage", niveau: "Tous niveaux" },
-  { nom: "Développé militaire", cible: "Épaules, triceps", niveau: "Intermédiaire+" },
-  { nom: "Hip thrust", cible: "Fessiers", niveau: "Tous niveaux" },
-  { nom: "Rowing barre", cible: "Dos, biceps", niveau: "Tous niveaux" },
-  { nom: "Mountain climbers", cible: "Core, cardio", niveau: "Tous niveaux" },
-  { nom: "Dips", cible: "Triceps, pectoraux", niveau: "Intermédiaire+" },
+const ETAPES = [
+  {
+    n: "01",
+    t: "Choisis ton objectif",
+    d: "Perte de poids, prise de masse, remise en forme ou endurance : ton programme part de ce que tu veux atteindre.",
+  },
+  {
+    n: "02",
+    t: "Indique ton niveau et ta disponibilité",
+    d: "Débutant, intermédiaire ou avancé, de 2 à 6 jours par semaine. Le volume et les repos s'ajustent.",
+  },
+  {
+    n: "03",
+    t: "Reçois ta semaine type",
+    d: "Séances détaillées avec exercices, séries, répétitions et temps de repos, prêtes à suivre.",
+  },
 ];
 
+const eyebrow = "mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-primary";
+const h2 = "font-display text-[clamp(40px,6vw,60px)] leading-none";
+const label = "mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground first:mt-0";
+
 function Index() {
+  const { avis, stats } = Route.useLoaderData();
+  const sub = useSubscription();
   const [objectif, setObjectif] = useState<Objectif>("forme");
   const [niveau, setNiveau] = useState<Niveau>("debutant");
   const [jours, setJours] = useState(3);
   const [genere, setGenere] = useState(false);
 
-  const programme = useMemo(() => {
-    const seances = SEANCES[objectif];
-    const repos = REPOS[niveau];
-    return Array.from({ length: jours }, (_, i) => {
-      const seance = seances[i % seances.length]!;
-      return {
-        jour: JOURS[i],
-        ...seance,
-        exercices: seance.exercices.map((ex) => ({
-          ...ex,
-          series: ex.series.includes("x") && !ex.series.includes("min") && !ex.series.includes("s")
-            ? reps(niveau, ex.series.split("x")[1]!.trim())
-            : ex.series,
-          repos: ex.repos === "—" ? ex.repos : ex.repos.includes("entre séries") ? ex.repos : repos,
-        })),
-      };
-    });
-  }, [objectif, niveau, jours]);
-
-  const objectifLabel = OBJECTIFS.find((o) => o.id === objectif)!;
-  const niveauLabel = NIVEAUX.find((n) => n.id === niveau)!;
+  const resume = `${OBJECTIFS.find((o) => o.id === objectif)!.label} · ${NIVEAUX.find((n) => n.id === niveau)!.label} · ${jours} jours`;
+  const reset = () => setGenere(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <a href="#" className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary">
-              <Dumbbell className="size-5 text-primary-foreground" />
-            </span>
-            <span className="font-display text-2xl tracking-wide">
-              COACH<span className="text-primary">.</span>PRO
-            </span>
-          </a>
-          <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <a href="#programme" className="transition-colors hover:text-primary">Programme</a>
-            <a href="#exercices" className="transition-colors hover:text-primary">Exercices</a>
-          </div>
-          <a
-            href="/connexion"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105"
-          >
-            Connexion
-          </a>
-        </nav>
-      </header>
+      <SiteHeader />
 
-      {/* Hero */}
-      <section className="relative flex min-h-[90vh] items-center overflow-hidden pt-20">
-        <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="Athlète en plein entraînement"
-            className="size-full object-cover object-center opacity-50"
-            width={1600}
-            height={1024}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
-        </div>
-        <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
-            <Activity className="size-3.5" />
-            Ton entraînement, tes règles
-          </p>
-          <h1 className="font-display text-6xl leading-[0.95] sm:text-7xl lg:text-8xl">
-            Ton coach sportif
-            <br />
-            <span className="text-primary">100% personnalisé</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Choisis ton objectif, ton niveau et tes jours dispo — obtiens
-            instantanément un programme hebdomadaire complet avec exercices,
-            séries et temps de repos.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              href="/questionnaire"
-              className="glow-primary inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform hover:scale-105"
-            >
-              Générer mon programme
-              <ChevronRight className="size-4" />
-            </a>
-            <a
-              href="#exercices"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 font-semibold transition-colors hover:border-primary/50"
-            >
-              Voir les exercices
-            </a>
+      <main>
+        {/* Hero */}
+        <section className="relative flex min-h-[90vh] items-center overflow-hidden pt-20">
+          <div className="absolute inset-0">
+            <img
+              src={heroImage}
+              alt="Athlète s'entraînant avec un programme de coach sportif personnalisé"
+              className="size-full object-cover object-center opacity-50"
+              width={1600}
+              height={1024}
+              fetchPriority="high"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
           </div>
-          <div className="mt-12 flex flex-wrap gap-8 text-sm">
-            <div>
-              <p className="font-display text-3xl text-primary">4</p>
-              <p className="text-muted-foreground">Objectifs ciblés</p>
-            </div>
-            <div>
-              <p className="font-display text-3xl text-primary">24+</p>
-              <p className="text-muted-foreground">Séances types</p>
-            </div>
-            <div>
-              <p className="font-display text-3xl text-primary">100%</p>
-              <p className="text-muted-foreground">Sur mesure</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Générateur */}
-      <section id="programme" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <div className="mb-10">
-          <p className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-primary">
-            <Target className="size-4" /> Générateur
-          </p>
-          <h2 className="font-display text-5xl sm:text-6xl">Construis ton programme</h2>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-          {/* Objectif */}
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            1. Ton objectif
-          </p>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {OBJECTIFS.map((o) => (
-              <button
-                key={o.id}
-                onClick={() => { setObjectif(o.id); setGenere(false); }}
-                className={`rounded-xl border p-4 text-left transition-all ${
-                  objectif === o.id
-                    ? "border-primary bg-primary/10 glow-primary"
-                    : "border-border bg-background hover:border-primary/40"
-                }`}
+          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
+              <Activity aria-hidden="true" className="size-3.5" />
+              Ton entraînement, tes règles
+            </p>
+            <h1 className="font-display text-[clamp(56px,9vw,96px)] leading-[0.95]">
+              Coach sportif en ligne
+              <br />
+              <span className="text-primary">100% personnalisé</span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+              Choisis ton objectif, ton niveau et tes jours dispo : obtiens un programme d'entraînement
+              hebdomadaire complet avec exercices, séries et temps de repos.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <a
+                href="/questionnaire"
+                className="glow-primary inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform hover:scale-105"
               >
-                <o.icon className={`mb-2 size-6 ${objectif === o.id ? "text-primary" : "text-muted-foreground"}`} />
-                <p className="font-semibold">{o.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{o.desc}</p>
-              </button>
-            ))}
-          </div>
-
-          {/* Niveau */}
-          <p className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            2. Ton niveau
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {NIVEAUX.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => { setNiveau(n.id); setGenere(false); }}
-                className={`rounded-lg border px-5 py-2.5 font-medium transition-all ${
-                  niveau === n.id
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:border-primary/40"
-                }`}
+                Générer mon programme
+                <ChevronRight aria-hidden="true" className="size-4" />
+              </a>
+              <a
+                href="#tarifs"
+                className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 font-semibold transition-colors hover:border-primary/50"
               >
-                {n.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Jours */}
-          <p className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            3. Jours d'entraînement par semaine
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            {[2, 3, 4, 5, 6].map((j) => (
-              <button
-                key={j}
-                onClick={() => { setJours(j); setGenere(false); }}
-                className={`flex size-12 items-center justify-center rounded-lg border font-display text-xl transition-all ${
-                  jours === j
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:border-primary/40"
-                }`}
-              >
-                {j}
-              </button>
-            ))}
-            <span className="text-sm text-muted-foreground">jours / semaine</span>
-          </div>
-
-          <button
-            onClick={() => setGenere(true)}
-            className="glow-primary mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 font-display text-2xl tracking-wide text-primary-foreground transition-transform hover:scale-[1.02] sm:w-auto"
-          >
-            <Zap className="size-5" />
-            Générer mon programme
-          </button>
-        </div>
-
-        {/* Résultat */}
-        {genere && (
-          <div className="mt-10">
-            <div className="mb-6 flex flex-wrap items-center gap-3">
-              <h3 className="font-display text-4xl">Ta semaine type</h3>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                {objectifLabel.label} · {niveauLabel.label} · {jours} jours
-              </span>
+                Voir les tarifs
+              </a>
             </div>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {programme.map((seance, i) => (
-                <article
-                  key={i}
-                  className="flex flex-col rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+            <dl className="mt-12 flex flex-wrap gap-8 text-sm">
+              {[
+                ["4", "Objectifs ciblés"],
+                ["24", "Séances types"],
+                ["2 à 6", "Jours par semaine"],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <dd className="font-display text-3xl text-primary">{v}</dd>
+                  <dt className="text-muted-foreground">{l}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* Générateur */}
+        <section id="programme" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6">
+          <div className="mb-10">
+            <p className={eyebrow}>
+              <Target aria-hidden="true" className="size-4" /> Générateur
+            </p>
+            <h2 className={h2}>Construis ton programme de musculation et de cardio</h2>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+            <p className={label} id="lbl-objectif">1. Ton objectif</p>
+            <div role="group" aria-labelledby="lbl-objectif" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {OBJECTIFS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={objectif === o.id}
+                  onClick={() => { setObjectif(o.id); reset(); }}
+                  className={`min-h-11 rounded-xl border p-4 text-left transition-all ${
+                    objectif === o.id ? "glow-primary border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"
+                  }`}
                 >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                        {seance.jour}
-                      </p>
-                      <h4 className="mt-1 font-display text-2xl leading-tight">{seance.titre}</h4>
-                      <p className="text-sm text-muted-foreground">{seance.focus}</p>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-1 rounded-lg bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      <Timer className="size-3.5" />
-                      {seance.duree}
-                    </span>
-                  </div>
-                  <ul className="flex-1 space-y-2.5">
-                    {seance.exercices.map((ex, j) => (
-                      <li
-                        key={j}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-background px-3 py-2.5 text-sm"
-                      >
-                        <span className="font-medium">{ex.nom}</span>
-                        <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1 font-semibold text-primary">
-                            <Repeat className="size-3" />
-                            {ex.series}
-                          </span>
-                          {ex.repos !== "—" && <span>repos {ex.repos}</span>}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
+                  <o.icon aria-hidden="true" className={`mb-2 size-6 ${objectif === o.id ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className="font-semibold">{o.label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{o.desc}</p>
+                </button>
               ))}
             </div>
-            <p className="mt-6 flex items-start gap-2 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-              <TrendingUp className="mt-0.5 size-4 shrink-0 text-primary" />
-              Conseil du coach : augmente progressivement les charges ou les répétitions
-              chaque semaine, et garde au moins un jour de repos complet entre deux
-              séances intenses.
-            </p>
-          </div>
-        )}
-      </section>
 
-      {/* Bibliothèque d'exercices */}
-      <section id="exercices" className="border-t border-border bg-card/50">
-        <div className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6">
-          <div className="mb-10">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-primary">
-              <Dumbbell className="size-4" /> Bibliothèque
-            </p>
-            <h2 className="font-display text-5xl sm:text-6xl">Les exercices essentiels</h2>
-            <p className="mt-3 max-w-xl text-muted-foreground">
-              Les mouvements de base qui composent tes programmes. Maîtrise-les
-              avant d'augmenter les charges.
-            </p>
+            <p className={label} id="lbl-niveau">2. Ton niveau</p>
+            <div role="group" aria-labelledby="lbl-niveau" className="flex flex-wrap gap-3">
+              {NIVEAUX.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  aria-pressed={niveau === n.id}
+                  onClick={() => { setNiveau(n.id); reset(); }}
+                  className={`min-h-11 rounded-lg border px-5 py-2.5 font-medium transition-all ${
+                    niveau === n.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"
+                  }`}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </div>
+
+            <p className={label} id="lbl-jours">3. Jours d'entraînement par semaine</p>
+            <div role="group" aria-labelledby="lbl-jours" className="flex flex-wrap items-center gap-3">
+              {[2, 3, 4, 5, 6].map((j) => (
+                <button
+                  key={j}
+                  type="button"
+                  aria-pressed={jours === j}
+                  aria-label={`${j} jours par semaine`}
+                  onClick={() => { setJours(j); reset(); }}
+                  className={`flex size-12 items-center justify-center rounded-lg border font-display text-xl transition-all ${
+                    jours === j ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"
+                  }`}
+                >
+                  {j}
+                </button>
+              ))}
+              <span className="text-sm text-muted-foreground">jours / semaine</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setGenere(true)}
+              className="glow-primary mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 font-display text-2xl tracking-wide text-primary-foreground transition-transform hover:scale-[1.02] sm:w-auto"
+            >
+              <Zap aria-hidden="true" className="size-5" />
+              Générer mon programme
+            </button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {BIBLIOTHEQUE.map((ex) => (
-              <div
-                key={ex.nom}
-                className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/50 hover:glow-primary"
+
+          {genere && (
+            <div role="status" className="glow-primary mt-10 rounded-2xl border border-primary/40 bg-card p-6 text-center sm:p-10">
+              <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+                <Lock aria-hidden="true" className="size-4" /> Réservé aux abonnés
+              </p>
+              <h3 className="mt-3 font-display text-4xl">Ton programme est prêt à débloquer</h3>
+              <p className="mt-2 inline-block rounded-full bg-primary/10 px-4 py-1 text-sm font-semibold text-primary">{resume}</p>
+              <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
+                Les séances détaillées, les exercices, les séries et les temps de repos sont accessibles avec un abonnement.
+              </p>
+              <a
+                href={sub.active ? `/programme?objectif=${objectif}&niveau=${niveau}&jours=${jours}` : "#tarifs"}
+                className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform hover:scale-105"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display text-2xl">{ex.nom}</h3>
-                  <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
-                    {ex.niveau}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{ex.cible}</p>
+                {sub.active ? "Voir ma semaine" : "Voir les abonnements"} <ChevronRight aria-hidden="true" className="size-4" />
+              </a>
+            </div>
+          )}
+        </section>
+
+        {/* Méthode */}
+        <section id="methode" className="scroll-mt-24 border-t border-border bg-card/50">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+            <p className={eyebrow}>Méthode</p>
+            <h2 className={h2}>Comment fonctionne ton coach sportif en ligne ?</h2>
+            <ol className="mt-10 grid gap-5 md:grid-cols-3">
+              {ETAPES.map((e) => (
+                <li key={e.n} className="rounded-2xl border border-border bg-card p-6">
+                  <p className="font-display text-4xl text-primary">{e.n}</p>
+                  <h3 className="mt-2 text-lg font-semibold">{e.t}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{e.d}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Tarifs */}
+        <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6">
+          <p className={eyebrow}>Tarifs</p>
+          <h2 className={h2}>Abonnement coach sportif en ligne</h2>
+          <p className="mt-3 max-w-xl text-muted-foreground">
+            Séances, exercices et suivi sont réservés aux abonnés. Sans engagement, résiliable à tout moment.
+          </p>
+          <div className="mt-10 grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))]">
+            {PLANS.map((p) => (
+              <div
+                key={p.id}
+                className={`flex flex-col rounded-2xl border bg-card p-6 ${p.recommended ? "glow-primary border-primary" : "border-border"}`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  {p.recommended ? "Recommandé" : p.tag}
+                </p>
+                <h3 className="mt-1 font-display text-3xl">{p.name}</h3>
+                <p className="mt-2">
+                  <span className="font-display text-5xl">{p.price}€</span>
+                  <span className="text-muted-foreground"> / mois</span>
+                </p>
+                <ul className="mt-5 flex-1 space-y-3 text-sm">
+                  {p.items.map((it) => (
+                    <li key={it} className="flex items-start gap-2">
+                      <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={`/abonnement?plan=${p.id}`}
+                  className={`mt-6 inline-flex min-h-12 items-center justify-center rounded-lg px-5 py-3 font-semibold transition-transform hover:scale-105 ${
+                    p.recommended ? "bg-primary text-primary-foreground" : "border border-border bg-background"
+                  }`}
+                >
+                  S'abonner<span className="sr-only"> à l'offre {p.name}</span>
+                </a>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary">
-              <Dumbbell className="size-4 text-primary-foreground" />
-            </span>
-            <span className="font-display text-xl tracking-wide">
-              COACH<span className="text-primary">.</span>PRO
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Coach Sportif Personnalisé — Entraîne-toi intelligemment. Consulte un
-            professionnel de santé avant de débuter.
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Paiement sécurisé par Stripe : tes coordonnées bancaires ne transitent jamais par ce site.
           </p>
-        </div>
-      </footer>
+        </section>
+
+        {/* Avis d'abonnés vérifiés : affichés uniquement s'il en existe de publiés */}
+        {stats && avis.length > 0 && (
+          <section id="avis" aria-labelledby="h-avis" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+            <p className={eyebrow}>Avis</p>
+            <h2 id="h-avis" className={h2}>Ce que disent nos abonnés</h2>
+            <p className="mt-3 text-muted-foreground">
+              Note moyenne : {stats.average}/5 sur {stats.count} avis d'abonnés vérifiés.
+            </p>
+            <ul className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {avis.map((a) => (
+                <li key={a.id} className="rounded-2xl border border-border bg-card p-6">
+                  <p className="flex gap-0.5" role="img" aria-label={`Note : ${a.note} sur 5`}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        aria-hidden="true"
+                        className={`size-4 ${n <= a.note ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                      />
+                    ))}
+                  </p>
+                  {a.commentaire && <p className="mt-3 text-sm">{a.commentaire}</p>}
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {a.auteur ? `${a.auteur} · ` : ""}Avis d'abonné vérifié
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* FAQ */}
+        <section id="faq" className="scroll-mt-24 border-t border-border bg-card/50">
+          <div className="mx-auto max-w-[820px] px-4 py-20 sm:px-6">
+            <p className={eyebrow}>FAQ</p>
+            <h2 className={h2}>Questions fréquentes sur le coaching sportif en ligne</h2>
+            <div className="mt-8 space-y-3">
+              {FAQ.map((f) => (
+                <details key={f.q} className="rounded-xl border border-border bg-card px-5 py-4">
+                  <summary className="min-h-6 cursor-pointer text-[17px] font-semibold">{f.q}</summary>
+                  <p className="mt-3 leading-relaxed text-muted-foreground">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

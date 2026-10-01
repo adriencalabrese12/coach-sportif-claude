@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePlan } from "@/lib/stripe.server";
 import type { Json } from "@/integrations/supabase/types";
 
 const inputSchema = z.object({
-  seance: z.unknown(),
+  seance: z.unknown().refine((v) => JSON.stringify(v ?? null).length < 20000, "Séance trop volumineuse"),
   checkin: z.object({
     fatigue: z.number().min(1).max(5),
     sommeil: z.number().min(0).max(24),
@@ -26,7 +27,8 @@ Réponds UNIQUEMENT avec un objet JSON : {"seance": <séance adaptée>, "justifi
 export const adapterSeance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => inputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requirePlan(context.userId, "premium");
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("Configuration IA manquante");
 
