@@ -17,7 +17,7 @@ export const Route = createFileRoute("/connexion")({
   component: Connexion,
 });
 
-const field = "w-full rounded-lg border border-input bg-background px-3 py-2";
+const field = "min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2";
 
 function Connexion() {
   const { plan } = Route.useSearch();

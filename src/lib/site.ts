@@ -1,6 +1,6 @@
 /** Domaine public du site : à définir via VITE_SITE_URL (voir .env.example). */
 export const SITE_URL = (
-  (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://VOTRE-DOMAINE.fr"
+  (import.meta.env["VITE_SITE_URL"] as string | undefined) ?? "https://VOTRE-DOMAINE.fr"
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "Coach.Pro";

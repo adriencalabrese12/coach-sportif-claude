@@ -73,10 +73,10 @@ const INIT: Profil = {
 };
 
 const chip = (on: boolean) =>
-  `rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+  `min-h-11 rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
     on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"
   }`;
-const field = "w-full rounded-lg border border-input bg-background px-3 py-2";
+const field = "min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2";
 
 function toggle<T>(list: T[], v: T): T[] {
   return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];

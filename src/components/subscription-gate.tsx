@@ -9,7 +9,7 @@ import { PLANS, type PlanId } from "@/lib/plans";
  * Les données protégées restent de toute façon refusées par les server functions et la RLS.
  */
 export function SubscriptionGate({ min, activating, children }: { min: PlanId; activating?: boolean; children: ReactNode }) {
-  const sub = useSubscription({ poll: activating });
+  const sub = useSubscription({ poll: activating === true });
 
   useEffect(() => {
     if (sub.session === null) window.location.replace("/connexion");

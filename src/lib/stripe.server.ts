@@ -49,7 +49,7 @@ export async function stripe<T = Record<string, unknown>>(
       Authorization: `Bearer ${env("STRIPE_SECRET_KEY")}`,
       ...(method === "POST" ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
     },
-    body: method === "POST" ? body : undefined,
+    ...(method === "POST" ? { body } : {}),
   });
   const json = (await res.json()) as T & { error?: { message?: string } };
   if (!res.ok) {

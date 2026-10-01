@@ -10,12 +10,45 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AbonnementRouteImport } from './routes/abonnement'
+import { Route as ApercuRouteImport } from './routes/apercu'
+import { Route as CgvRouteImport } from './routes/cgv'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as ProgrammeRouteImport } from './routes/programme'
 import { Route as QuestionnaireRouteImport } from './routes/questionnaire'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AbonnementRoute = AbonnementRouteImport.update({
+  id: '/abonnement',
+  path: '/abonnement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApercuRoute = ApercuRouteImport.update({
+  id: '/apercu',
+  path: '/apercu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CgvRoute = CgvRouteImport.update({
+  id: '/cgv',
+  path: '/cgv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnexionRoute = ConnexionRouteImport.update({
@@ -23,40 +56,186 @@ const ConnexionRoute = ConnexionRouteImport.update({
   path: '/connexion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgrammeRoute = ProgrammeRouteImport.update({
+  id: '/programme',
+  path: '/programme',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QuestionnaireRoute = QuestionnaireRouteImport.update({
   id: '/questionnaire',
   path: '/questionnaire',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe-webhook',
+  path: '/api/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/abonnement': typeof AbonnementRoute
+  '/apercu': typeof ApercuRoute
+  '/cgv': typeof CgvRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/connexion': typeof ConnexionRoute
+  '/cookies': typeof CookiesRoute
+  '/llms.txt': typeof LlmsDottxtRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/programme': typeof ProgrammeRoute
   '/questionnaire': typeof QuestionnaireRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/abonnement': typeof AbonnementRoute
+  '/apercu': typeof ApercuRoute
+  '/cgv': typeof CgvRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/connexion': typeof ConnexionRoute
+  '/cookies': typeof CookiesRoute
+  '/llms.txt': typeof LlmsDottxtRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/programme': typeof ProgrammeRoute
   '/questionnaire': typeof QuestionnaireRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog': typeof BlogIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/abonnement': typeof AbonnementRoute
+  '/apercu': typeof ApercuRoute
+  '/cgv': typeof CgvRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/connexion': typeof ConnexionRoute
+  '/cookies': typeof CookiesRoute
+  '/llms.txt': typeof LlmsDottxtRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/programme': typeof ProgrammeRoute
   '/questionnaire': typeof QuestionnaireRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/connexion' | '/questionnaire'
+  fullPaths:
+    | '/'
+    | '/abonnement'
+    | '/apercu'
+    | '/cgv'
+    | '/confidentialite'
+    | '/connexion'
+    | '/cookies'
+    | '/llms.txt'
+    | '/mentions-legales'
+    | '/programme'
+    | '/questionnaire'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/stripe-webhook'
+    | '/blog/$slug'
+    | '/blog/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/connexion' | '/questionnaire'
-  id: '__root__' | '/' | '/connexion' | '/questionnaire'
+  to:
+    | '/'
+    | '/abonnement'
+    | '/apercu'
+    | '/cgv'
+    | '/confidentialite'
+    | '/connexion'
+    | '/cookies'
+    | '/llms.txt'
+    | '/mentions-legales'
+    | '/programme'
+    | '/questionnaire'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/stripe-webhook'
+    | '/blog/$slug'
+    | '/blog'
+  id:
+    | '__root__'
+    | '/'
+    | '/abonnement'
+    | '/apercu'
+    | '/cgv'
+    | '/confidentialite'
+    | '/connexion'
+    | '/cookies'
+    | '/llms.txt'
+    | '/mentions-legales'
+    | '/programme'
+    | '/questionnaire'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/stripe-webhook'
+    | '/blog/$slug'
+    | '/blog/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AbonnementRoute: typeof AbonnementRoute
+  ApercuRoute: typeof ApercuRoute
+  CgvRoute: typeof CgvRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
   ConnexionRoute: typeof ConnexionRoute
+  CookiesRoute: typeof CookiesRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
+  ProgrammeRoute: typeof ProgrammeRoute
   QuestionnaireRoute: typeof QuestionnaireRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -68,11 +247,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/abonnement': {
+      id: '/abonnement'
+      path: '/abonnement'
+      fullPath: '/abonnement'
+      preLoaderRoute: typeof AbonnementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apercu': {
+      id: '/apercu'
+      path: '/apercu'
+      fullPath: '/apercu'
+      preLoaderRoute: typeof ApercuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgv': {
+      id: '/cgv'
+      path: '/cgv'
+      fullPath: '/cgv'
+      preLoaderRoute: typeof CgvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/connexion': {
       id: '/connexion'
       path: '/connexion'
       fullPath: '/connexion'
       preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programme': {
+      id: '/programme'
+      path: '/programme'
+      fullPath: '/programme'
+      preLoaderRoute: typeof ProgrammeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/questionnaire': {
@@ -82,13 +317,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe-webhook': {
+      id: '/api/stripe-webhook'
+      path: '/api/stripe-webhook'
+      fullPath: '/api/stripe-webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AbonnementRoute: AbonnementRoute,
+  ApercuRoute: ApercuRoute,
+  CgvRoute: CgvRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
   ConnexionRoute: ConnexionRoute,
+  CookiesRoute: CookiesRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
+  ProgrammeRoute: ProgrammeRoute,
   QuestionnaireRoute: QuestionnaireRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
