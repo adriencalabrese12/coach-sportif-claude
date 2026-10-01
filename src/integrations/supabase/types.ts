@@ -146,6 +146,24 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: { auteur: string | null; commentaire: string | null; created_at: string; id: string; note: number; status: string; user_id: string }
+        Insert: { auteur?: string | null; commentaire?: string | null; created_at?: string; id?: string; note: number; status?: string; user_id?: string }
+        Update: { auteur?: string | null; commentaire?: string | null; created_at?: string; id?: string; note?: number; status?: string; user_id?: string }
+        Relationships: []
+      }
+      stripe_events: {
+        Row: { created_at: string; id: string; type: string }
+        Insert: { created_at?: string; id: string; type: string }
+        Update: { created_at?: string; id?: string; type?: string }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: { current_period_end: string | null; plan: string; status: string; stripe_customer_id: string | null; stripe_subscription_id: string | null; updated_at: string; user_id: string }
+        Insert: { current_period_end?: string | null; plan: string; status: string; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; updated_at?: string; user_id: string }
+        Update: { current_period_end?: string | null; plan?: string; status?: string; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
       session_logs: {
         Row: {
           date: string
@@ -178,7 +196,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_plan: { Args: { _min: string; _user: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
